@@ -3,7 +3,6 @@ const gm = require('gm').subClass({imageMagick: true})
 const google = require('googleapis').google
 const customSearch = google.customsearch('v1')
 const state = require('./state.js')
-
 const googleSearchCredentials = require('../credentials/google-search.json')
 
 async function robot() {
@@ -13,6 +12,7 @@ async function robot() {
     await downloadAllImages(content)
     await convertAllImages(content)
     await createAllSentenceImages(content)
+    await createYouTubeThumbnail()
 
     state.save(content)
 
@@ -33,11 +33,11 @@ async function robot() {
           searchType: 'image',
           num: 2
         })
-    
+
         const imagesUrl = response.data.items.map((item) => {
           return item.link
         })
-    
+
         return imagesUrl
     }
 
@@ -85,7 +85,7 @@ async function robot() {
             const outputFile = `./content/${sentenceIndex}-converted.png`
             const width = 1920
             const height = 1080
-        
+
             gm()
                 .in(inputFile)
                 .out('(')
@@ -110,7 +110,7 @@ async function robot() {
                     if (error) {
                         return reject(error)
                     }
-            
+
                     console.log(`> Image converted: ${inputFile}`)
                     resolve()
                 })
@@ -127,7 +127,7 @@ async function robot() {
     async function createSentenceImage(sentenceIndex, sentenceText) {
         return new Promise((resolve, reject) => {
           const outputFile = `./content/${sentenceIndex}-sentence.png`
-    
+
           const templateSettings = {
             0: {
                 size: '1920x400',
@@ -157,9 +157,9 @@ async function robot() {
                 size: '1920x400',
                 gravity: 'center'
             }
-    
+
           }
-    
+
         gm()
             .out('-size', templateSettings[sentenceIndex].size)
             .out('-gravity', templateSettings[sentenceIndex].gravity)
@@ -171,7 +171,7 @@ async function robot() {
               if (error) {
                 return reject(error)
               }
-    
+
               console.log(`> Sentence created: ${outputFile}`)
               resolve()
             })
@@ -183,13 +183,13 @@ async function robot() {
             gm()
                 .in('./content/0-converted.png')
                 .write('./content/youtube-thumbnail.jpg', (error) => {
-                if (error) {
-                    return reject(error)
-                }
-        
-                console.log('> YouTube thumbnail created')
-                resolve()
-                })
+                    if (error) {
+                        return reject(error)
+                    }
+
+                    console.log('> YouTube thumbnail created')
+                    resolve()
+                    })
         })
     }
 
